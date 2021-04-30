@@ -1,46 +1,34 @@
 const express=require('express')
 const rtLogin=express.Router()
-const daoUser=require('../dao/daoUser')
-///////////////////////////////////////////
-//isntanciar passport:
-const passport = require('passport')
-//instanciar la estrategia local:
-const LocalStrategy = require('passport-local').Strategy
-//métodos para serializar/deserializar
-passport.serializeUser(function(user, done) {
-    done(null, user.id)
-})
-passport.deserializeUser(function(id, done) {
-    User.findById(id, function(err, user) {
-        done(err, user)
-    })
-})
-//inicializar passport
-rtLogin.use(passport.initialize())
-rtLogin.use(passport.session())
-///////////////////////////////////////////
+const passport = require('../modules/passport')
 
-passport.use('signup', new LocalStrategy({
-        usernameField: 'email',
-        passwordField: 'password'
-    },(email,password,done)=>{
-        daoUser.create({
-            email: email,
-            password, password
-        }).then(data=>{
-            done(null,data)
-        })
-    })
-)
-
+//registro de usuarios
 rtLogin.post('/signup',(req,res)=>{
-    passport.authenticate('signup',(err,data,info)=>{
+    passport.authenticate('signup',(err,data)=>{
+        res.json(data)
+    })(req,res)
+})
+
+//logueo de usuarios
+rtLogin.post('/signin',(req,res)=>{
+    passport.authenticate('signin',(err,data)=>{
         res.json(data)
     })(req,res)
 })
 
 
+////////////////GOOGLE///////////
+//login de google
+rtLogin.get('/signin-google',(req,res)=>{
+    passport.authenticate('signinGoogle',{scope:['profile','email']})
+})
 
+//callback de google
+rtLogin.get('/google/callback',(req,res)=>{ //este /google/callback se lo hemos dado desde google
+    passport.authenticate('signinGoogle',(err,data)=>{
+        res.json(data)
+    })(req,res)
+})
 
 
 module.exports=rtLogin
